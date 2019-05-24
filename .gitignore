@@ -1,3 +1,15 @@
+#block vc project
+
+.vc/
+.vscode/
+
+*.avi
+
+
+
+
+
+# default ==================================================================
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
