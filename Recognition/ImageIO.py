@@ -10,7 +10,7 @@ class reader:
         self.__image_capture=cv2.VideoCapture(source)
         if not self.__image_capture.isOpened():
             raise(ValueError)
-        self.size = (int(self.__image_capture.get(cv2.CAP_PROP_FRAME_WIDTH)),int(self.__image_capture.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+        self.size = (int(self.__image_capture.get(cv2.CAP_PROP_FRAME_HEIGHT)),int(self.__image_capture.get(cv2.CAP_PROP_FRAME_WIDTH)))
         self.fps=self.__image_capture.get(cv2.CAP_PROP_FPS)
         if self.fps==0:
             self.fps=30
