@@ -127,19 +127,27 @@ def Useage(image,mask,times=1):
     sum_of_image=np.sum(masked)
     return sum_of_image/sum_of_mask*times
 
+def Useage_Filter(list,valve):
+    out=[]
+    for elem in list:
+        if elem>=valve:
+            out.append(True)
+        else:
+            out.append(False)
+    return out
+
 if __name__ == "__main__":
     reader=image.reader()
 
 #    mask=Mask_Square(reader.size,100,100,50)
-    pointlist=np.array([[200,100],[200,200],[400,400],[300,100]], dtype = np.int32)
+    pointlist=np.array([[242,351],[407,353],[398,478],[213,479]], dtype = np.int32)
     pointlist=pointlist.reshape([1,4,2])
     mask=Mask_Polygon(reader.size,pointlist)
     cv2.imshow("mask",mask)
 
-
     _,a=reader.read()
     _,b=reader.read(False)
-    #cv2.imshow("s",a)
+    cv2.imshow("s",a)
     addresult=cv2.add(a,np.zeros(np.shape(a),dtype=np.uint8),mask=mask)
     #cv2.imshow("add",addresult)
 
@@ -159,7 +167,7 @@ if __name__ == "__main__":
     gen=Diff_Analyzer(currentimage)
 #    next(gen)
     while(1):
-        #sleep(1)
+        sleep(0.5)
         _,currentimage=reader.read()
 #        feedback=gen.send(currentimage)
         feedback=gen.change(currentimage,mode=1)
