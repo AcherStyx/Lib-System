@@ -63,57 +63,57 @@ def Dense_Optical_Flow(image):
             break
         next=(yield bgr)
 
-def Diff_Analyze(image_init):
+class Diff_Analyzer:
     '''
-    图片差异分析，检测创建时的帧和之后输入的帧之间的差距
+    图片差异分析
     '''
-    firstFrame = image_init
-    image=image_init
+    __init_frame=None
+    def __init__(self,image_init):
+        self.__init_frame=image_init
+    def change(self,image,mode=0,gaussian=5,valve=100):
+        '''
+        mode        return
+        0       带阀值限制后的输出
+        1       未使用阀值过滤的原始差异结果
+        2       带边框指示变化区域的原始图
 
-    while True:
+        gaussian    高斯模糊的程度
+        valve       过滤阀值
+        '''
         # 创建参数解析器并解析参数
         ap = argparse.ArgumentParser()
         ap.add_argument("-v", "--video", help="path to the video file")
         ap.add_argument("-a", "--min-area", type=int, default=500, help="minimum area size")
         args = vars(ap.parse_args())
-
-        frame=image
         
-        # 调整该帧的大小，转换为灰阶图像并且对其进行高斯模糊
-        # frame = imutils.resize(frame, width=500)
-        gray = frame
-        gray = cv2.GaussianBlur(gray, (21, 21), 0)
+        # 高斯模糊，防噪点
+        image=cv2.GaussianBlur(image,(gaussian,gaussian),0)
 
         # 计算当前帧和第一帧的不同
-        frameDelta = cv2.absdiff(firstFrame, gray)
-        thresh = cv2.threshold(frameDelta, 25, 255, cv2.THRESH_BINARY)[1]
+        frameDelta = cv2.absdiff(self.__init_frame, image)
+        thresh = cv2.threshold(frameDelta, valve, 255, cv2.THRESH_BINARY)[1]
     
-        # 扩展阀值图像填充孔洞，然后找到阀值图像上的轮廓
-        #thresh = cv2.dilate(thresh, None, iterations=2)
-        (cnts, _) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
-            cv2.CHAIN_APPROX_SIMPLE)
-    
-        # 遍历轮廓
-        for c in cnts:
-            # if the contour is too small, ignore it
-            if cv2.contourArea(c) < args["min_area"]:
-                continue
-    
-            # 计算轮廓的边界框，在当前帧中画出该框
-            (x, y, w, h) = cv2.boundingRect(c)
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            
-
-        #显示当前帧并记录用户是否按下按键
-        cv2.imshow("Security Feed", frame)
-        cv2.imshow("Thresh", thresh)
-        cv2.imshow("Frame Delta", frameDelta)
+        if mode==0:
+            #cv2.imshow("Thresh", thresh)
+            return thresh
+        elif mode==1:
+            #cv2.imshow("Frame Delta", frameDelta)
+            return frameDelta
+        elif mode==2:
+            # 创建边框
+            (cnts, _) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
+                cv2.CHAIN_APPROX_SIMPLE)
+            for c in cnts:
+                if cv2.contourArea(c) < args["min_area"]:
+                    continue
+                (x, y, w, h) = cv2.boundingRect(c)
+                cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
         
-        k = cv2.waitKey(30) & 0xff
-        if k == 27:
-            break
-        
-        image=(yield thresh)
+            # 输出带矩形标记的当前帧
+            cv2.imshow("Security Feed", image)
+            return image
+        else:
+            raise(ValueError)
 
 if __name__ == "__main__":
     reader=image.reader()
@@ -139,13 +139,16 @@ if __name__ == "__main__":
     _,currentimage=reader.read()
 #    gen=LK_Optical_Flow(currentimage,feat,mask=mask)
 #    gen=Dense_Optical_Flow(currentimage)
-    gen=Diff_Analyze(currentimage)
-    next(gen)
+#    gen=Diff_Analyze(currentimage)
+    gen=Diff_Analyzer(currentimage)
+#    next(gen)
     while(1):
         #sleep(1)
         _,currentimage=reader.read()
-        feedback=gen.send(currentimage)
+#        feedback=gen.send(currentimage)
+        feedback=gen.change(currentimage)
         cv2.imshow("opticalflow",feedback)
+        cv2.waitKey(30)
         percentage=np.sum(feedback)/(254*480*640)
         print(percentage)
 
