@@ -8,7 +8,7 @@ from time import sleep
 
 def Mask_Square(shape,x,y,r):
     mask=np.zeros(shape,dtype=np.uint8)
-    mask[max(x-r,0):min(x+r,shape[0]-1),max(y-r,0):min(y+r,size[1]-1)]=255
+    mask[max(x-r,0):min(x+r,shape[0]-1),max(y-r,0):min(y+r,shape[1]-1)]=255
     return mask
 
 def Mask_Polygon(shape,pointlist):
