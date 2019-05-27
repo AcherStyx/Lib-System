@@ -12,7 +12,7 @@ def Mask_Square(size,x,y,r):
     return mask
 
 def Feature(image,mask):
-    feature=cv2.goodFeaturesToTrack(image,5,0.5,5,mask=mask)
+    feature=cv2.goodFeaturesToTrack(image,50,0.1,5,mask=mask)
     return feature
 
 def LK_Optical_Flow(image,p0,mask=None):
@@ -32,7 +32,6 @@ def LK_Optical_Flow(image,p0,mask=None):
         except TypeError:
             warn("Lose track")
             return
-
         for i,(new,old) in enumerate(zip(good_new, good_old)):
             a,b = new.ravel()
             c,d = old.ravel()
@@ -65,6 +64,9 @@ def Dense_Optical_Flow(image):
         next=(yield bgr)
 
 def Diff_Analyze(image_init):
+    '''
+    图片差异分析，检测创建时的帧和之后输入的帧之间的差距
+    '''
     firstFrame = image_init
     image=image_init
 
@@ -76,7 +78,6 @@ def Diff_Analyze(image_init):
         args = vars(ap.parse_args())
 
         frame=image
-        text = "Unoccupied"
         
         # 调整该帧的大小，转换为灰阶图像并且对其进行高斯模糊
         # frame = imutils.resize(frame, width=500)
@@ -88,7 +89,7 @@ def Diff_Analyze(image_init):
         thresh = cv2.threshold(frameDelta, 25, 255, cv2.THRESH_BINARY)[1]
     
         # 扩展阀值图像填充孔洞，然后找到阀值图像上的轮廓
-        thresh = cv2.dilate(thresh, None, iterations=2)
+        #thresh = cv2.dilate(thresh, None, iterations=2)
         (cnts, _) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
             cv2.CHAIN_APPROX_SIMPLE)
     
@@ -101,7 +102,7 @@ def Diff_Analyze(image_init):
             # 计算轮廓的边界框，在当前帧中画出该框
             (x, y, w, h) = cv2.boundingRect(c)
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            text = "Occupied"
+            
 
         #显示当前帧并记录用户是否按下按键
         cv2.imshow("Security Feed", frame)
@@ -112,17 +113,17 @@ def Diff_Analyze(image_init):
         if k == 27:
             break
         
-        image=(yield frame)
+        image=(yield thresh)
 
 if __name__ == "__main__":
     reader=image.reader()
 
-    mask=Mask_Square(reader.size,300,300,200)
+    mask=Mask_Square(reader.size,100,100,50)
     #cv2.imshow("mask",mask)
 
     _,a=reader.read()
     _,b=reader.read(False)
-    cv2.imshow("s",a)
+    #cv2.imshow("s",a)
     addresult=cv2.add(a,np.zeros(np.shape(a),dtype=np.uint8),mask=mask)
     #cv2.imshow("add",addresult)
 
@@ -145,6 +146,8 @@ if __name__ == "__main__":
         _,currentimage=reader.read()
         feedback=gen.send(currentimage)
         cv2.imshow("opticalflow",feedback)
+        percentage=np.sum(feedback)/(254*480*640)
+        print(percentage)
 
     cv2.waitKey()
     cv2.destroyAllWindows()
