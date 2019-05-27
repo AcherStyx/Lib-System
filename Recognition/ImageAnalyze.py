@@ -6,9 +6,15 @@ from warnings import warn
 import argparse
 from time import sleep
 
-def Mask_Square(size,x,y,r):
-    mask=np.zeros(size,dtype=np.uint8)
-    mask[max(x-r,0):min(x+r,size[0]-1),max(y-r,0):min(y+r,size[1]-1)]=255
+def Mask_Square(shape,x,y,r):
+    mask=np.zeros(shape,dtype=np.uint8)
+    mask[max(x-r,0):min(x+r,shape[0]-1),max(y-r,0):min(y+r,size[1]-1)]=255
+    return mask
+
+def Mask_Polygon(shape,pointlist):
+    mask=np.zeros(shape, dtype = "uint8")
+    #mask=cv2.polylines(mask, pointlist, 1, 255)
+    mask=cv2.fillPoly(mask, pointlist, 255)
     return mask
 
 def Feature(image,mask):
@@ -115,11 +121,21 @@ class Diff_Analyzer:
         else:
             raise(ValueError)
 
+def Useage(image,mask,times=1):
+    sum_of_mask=np.sum(mask)
+    masked=cv2.bitwise_and(image, image, mask=mask)
+    sum_of_image=np.sum(masked)
+    return sum_of_image/sum_of_mask*times
+
 if __name__ == "__main__":
     reader=image.reader()
 
-    mask=Mask_Square(reader.size,100,100,50)
-    #cv2.imshow("mask",mask)
+#    mask=Mask_Square(reader.size,100,100,50)
+    pointlist=np.array([[200,100],[200,200],[400,400],[300,100]], dtype = np.int32)
+    pointlist=pointlist.reshape([1,4,2])
+    mask=Mask_Polygon(reader.size,pointlist)
+    cv2.imshow("mask",mask)
+
 
     _,a=reader.read()
     _,b=reader.read(False)
@@ -146,10 +162,11 @@ if __name__ == "__main__":
         #sleep(1)
         _,currentimage=reader.read()
 #        feedback=gen.send(currentimage)
-        feedback=gen.change(currentimage)
+        feedback=gen.change(currentimage,mode=1)
         cv2.imshow("opticalflow",feedback)
         cv2.waitKey(30)
-        percentage=np.sum(feedback)/(254*480*640)
+        #percentage=np.sum(feedback)/(254*480*640)
+        percentage=Useage(feedback,mask,100)
         print(percentage)
 
     cv2.waitKey()
