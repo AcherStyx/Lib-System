@@ -6,6 +6,7 @@
 *.MTS
 *.mp4
 *.avi
+.old_*
 
 # default ==================================================================
 # Byte-compiled / optimized / DLL files

@@ -6,7 +6,7 @@ from warnings import warn
 import argparse
 from time import sleep
 import pylab
-
+import imutils
 def Mask_Square(shape,x,y,r):
     mask=np.zeros(shape,dtype=np.uint8)
     mask[max(x-r,0):min(x+r,shape[0]-1),max(y-r,0):min(y+r,shape[1]-1)]=255
@@ -147,7 +147,7 @@ def GetCapturePointList(image,n):    #image为所要交互获取点的图像，n
 if __name__ == "__main__":
     import imutils
 
-    reader=image.reader(0)
+    reader=image.reader("E:/[工程项目]/[数据集]/[图书馆占座识别视频样本]/00129_1.mp4")
     _,a=reader.read()
     _,b=reader.read(False)
 
@@ -173,55 +173,68 @@ if __name__ == "__main__":
     print("="*10,"差异分析","="*10)
 
     
-    #seat1=[[326,350],[575,318],[400,265]]
-    #seat2=[[575,318],[400,265],[588,245]]
-    #seat3=[[575,318],[588,245],[780,296]]
-    #seat4=[[575,318],[780,296],[823,400]]
-    #seat5=[[575,318],[823,400],[553,453]]
-    #seat6=[[575,318],[823,400],[326,350]]
-    #seats=[seat1]+[seat2]+[seat3]+[seat4]+[seat5]+[seat6]
+    seat1=[[307,670],[671,611],[869,694],[905,954]]
+    seat2=[[313,673],[716,614],(853, 503), (617, 449)]
+    seat3=[[(625, 450), (831, 517), (970, 424), (756, 360)]]
+    seat4=[[(759, 359), (972, 427), (1080, 314), (1069, 173)]]
+    seat5=[[(1077, 175), (1073, 300), (1184, 354), (1495, 267)]]
+    seat6=[[(1497, 269), (1194, 339), (1080, 426), (1344, 494)]]
+    seat7=[[(1357, 466), (1106, 394), (960, 536), (1209, 670)]]
+    seat8=[[(1180, 694), (939, 576), (846, 687), (903, 956)]]
+    seats=[seat1]+[seat2]+[seat3]+[seat4]+[seat5]+[seat6]+[seat7]+[seat8]
     # 打印第一张作为示例
     _,currentimage=reader.read(False)
-    currentimage = imutils.resize(currentimage, width=300)
+    #currentimage = imutils.resize(currentimage, width=300)
     #cv2.imshow("Init",currentimage)
     cv2.waitKey()
     
-    seats=[]
-    for i in range(3):
-        seat=GetCapturePointList(currentimage,3)
-        cv2.waitKey()
-        seats.append(seat)
-    seats=np.array(seats)
-    seats.reshape([3,1,3,2])
+    #seats=[]
+    #for i in range(3):
+    #    seat=GetCapturePointList(currentimage,4)
+    #    cv2.waitKey()
+    #    seats.append(seat)
+    #    print(seat)
+    #seats=np.array(seats)
+    #seats.reshape([3,1,3,2])
         
 
     # 开始计算差异
     _,currentimage=reader.read()
-    currentimage = imutils.resize(currentimage, width=300)
+    #currentimage = imutils.resize(currentimage, width=800)
     # 建立MASK
     mask=[]
     for index,seat in enumerate(seats):    
         pointlist=np.array(seat, dtype = np.int32)
         pointlist=pointlist.reshape([1,-1,2])
         mask.append(Mask_Polygon(currentimage.shape,pointlist)) 
-        cv2.imshow("Mask{i}".format(i=index),mask[index])
+        #cv2.imshow("Mask{i}".format(i=index),mask[index])
 
 #    gen=LK_Optical_Flow(currentimage,feat,mask=mask)
 #    gen=Dense_Optical_Flow(currentimage)
 #    gen=Diff_Analyze(currentimage)
     gen=Diff_Analyzer(currentimage)
 #    next(gen)
+    i=0
     while(1):
-#        sleep(0.1)
+        # sleep(0.1)
+        
         _,currentimage=reader.read()
-        currentimage = imutils.resize(currentimage, width=300)
+        if i%10==0:
+            i+=1
+        else:
+            i+=1
+            continue
+            
+        currentimage2 = imutils.resize(currentimage, width=800)
+        cv2.imshow("Current",currentimage2)
 #        feedback=gen.send(currentimage)
-        feedback=gen.change(currentimage,mode=0,valve=25)
-        cv2.imshow("DiffAnalyze",feedback)
+        feedback=gen.change(currentimage,mode=0,valve=25)        
         cv2.waitKey(30)
         for index,seatmask in enumerate(mask):
             percentage=Useage(feedback,seatmask,100)
             print(index,percentage)
+        feedback = imutils.resize(feedback, width=800)
+        cv2.imshow("DiffAnalyze",feedback)
         print("\n")
 
     cv2.waitKey()
