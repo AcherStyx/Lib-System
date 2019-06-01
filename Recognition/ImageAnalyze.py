@@ -6,6 +6,7 @@ from warnings import warn
 import argparse
 from time import sleep
 
+
 def Mask_Square(shape,x,y,r):
     mask=np.zeros(shape,dtype=np.uint8)
     mask[max(x-r,0):min(x+r,shape[0]-1),max(y-r,0):min(y+r,shape[1]-1)]=255
@@ -137,45 +138,79 @@ def Useage_Filter(list,valve):
     return out
 
 if __name__ == "__main__":
-    reader=image.reader()
+    import imutils
 
+    reader=image.reader("./Recognition/00122.mp4")
+    _,a=reader.read()
+    _,b=reader.read(False)
+
+    print("="*10,"蒙版","="*10)    
 #    mask=Mask_Square(reader.size,100,100,50)
     pointlist=np.array([[242,351],[407,353],[398,478],[213,479]], dtype = np.int32)
     pointlist=pointlist.reshape([1,4,2])
-    mask=Mask_Polygon(reader.size,pointlist)
-    cv2.imshow("mask",mask)
-
-    _,a=reader.read()
-    _,b=reader.read(False)
-    cv2.imshow("s",a)
+    mask=Mask_Polygon(a.shape,pointlist)
+    #cv2.imshow("mask",mask)
+    #cv2.imshow("s",a)
     addresult=cv2.add(a,np.zeros(np.shape(a),dtype=np.uint8),mask=mask)
     #cv2.imshow("add",addresult)
 
+    print("="*10,"特征点提取","="*10)
     feat=Feature(a,mask)
-
     color=np.random.randint(0,255,[50,3])
     for i,point in enumerate(feat):
         b = cv2.circle(b,(point[0][0],point[0][1]),5,color[i].tolist(),-1)
-
     print(feat)
     #cv2.imshow("with feature",b)
 
+
+    print("="*10,"差异分析","="*10)
+
+    seat1=[[326,350],[575,318],[400,265]]
+    seat2=[[575,318],[400,265],[588,245]]
+    seat3=[[575,318],[588,245],[780,296]]
+    seat4=[[575,318],[780,296],[823,400]]
+    seat5=[[575,318],[823,400],[553,453]]
+    seat6=[[575,318],[823,400],[326,350]]
+    seats=[seat1]+[seat2]+[seat3]+[seat4]+[seat5]+[seat6]
+    # 打印第一张作为示例
+    _,currentimage=reader.read(False)
+    currentimage = imutils.resize(currentimage, width=1000)
+    #cv2.imshow("Init",currentimage)
+    cv2.waitKey()
+    
+    # 开始计算差异
     _,currentimage=reader.read()
+    currentimage = imutils.resize(currentimage, width=1000)
+    # 建立MASK
+    mask=[]
+    for index,seat in enumerate(seats):    
+        pointlist=np.array(seat, dtype = np.int32)
+        pointlist=pointlist.reshape([1,-1,2])
+        mask.append(Mask_Polygon(currentimage.shape,pointlist)) 
+        #cv2.imshow("Mask{i}".format(i=index),mask[index])
+
 #    gen=LK_Optical_Flow(currentimage,feat,mask=mask)
 #    gen=Dense_Optical_Flow(currentimage)
 #    gen=Diff_Analyze(currentimage)
     gen=Diff_Analyzer(currentimage)
 #    next(gen)
+    <!-- Fonts and stuff -->
+<link href="http://shuoyang1213.me/WIDERFACE/support/css" rel="stylesheet" type="text/css">
+<link rel="stylesheet" type="text/css" href="http://shuoyang1213.me/WIDERFACE/support/project.css" media="screen">
+<link rel="stylesheet" type="text/css" media="screen" href="http://shuoyang1213.me/WIDERFACE/support/iconize.css">
+<script async="" src="http://shuoyang1213.me/WIDERFACE/support/prettify.js"></script>
     while(1):
-        sleep(0.5)
+#        sleep(0.1)
         _,currentimage=reader.read()
+        currentimage = imutils.resize(currentimage, width=1000)
 #        feedback=gen.send(currentimage)
-        feedback=gen.change(currentimage,mode=1)
-        cv2.imshow("opticalflow",feedback)
+        feedback=gen.change(currentimage,mode=0,valve=25)
+        cv2.imshow("DiffAnalyze",feedback)
         cv2.waitKey(30)
-        #percentage=np.sum(feedback)/(254*480*640)
-        percentage=Useage(feedback,mask,100)
-        print(percentage)
+        for index,seatmask in enumerate(mask):
+            percentage=Useage(feedback,seatmask,100)
+            print(index,percentage)
+        print("\n")
 
     cv2.waitKey()
     cv2.destroyAllWindows()

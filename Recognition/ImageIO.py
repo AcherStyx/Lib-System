@@ -6,7 +6,7 @@ class reader:
     fps=None
     size=None
     __image_capture=None
-    def __init__(self,source=0):
+    def __init__(self,source=0,resize=False):
         self.__image_capture=cv2.VideoCapture(source)
         if not self.__image_capture.isOpened():
             raise(ValueError)
@@ -58,7 +58,7 @@ class writer:
     pass
 
 if __name__ == "__main__":
-    a=reader(0)
+    a=reader("./Recognition/00122.MTS")
     _,image=a.read()
     a.showsample(True)
     a.showsample(False)

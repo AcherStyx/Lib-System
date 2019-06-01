@@ -2,12 +2,10 @@
 
 .vc/
 .vscode/
-
+*.MANIFEST
+*.MTS
+*.mp4
 *.avi
-
-
-
-
 
 # default ==================================================================
 # Byte-compiled / optimized / DLL files
