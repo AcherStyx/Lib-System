@@ -1,4 +1,4 @@
-import ImageIO as image 
+import ImageIO as image
 import cv2.cv2 as cv2
 import numpy as np 
 import matplotlib.pyplot as plt
@@ -7,6 +7,7 @@ import argparse
 from time import sleep
 import pylab
 import imutils
+import CSVToFile as fileio
 def Mask_Square(shape,x,y,r):
     mask=np.zeros(shape,dtype=np.uint8)
     mask[max(x-r,0):min(x+r,shape[0]-1),max(y-r,0):min(y+r,shape[1]-1)]=255
@@ -219,22 +220,26 @@ if __name__ == "__main__":
         # sleep(0.1)
         
         _,currentimage=reader.read()
-        if i%10==0:
+        if i%100==0:
             i+=1
         else:
             i+=1
             continue
-            
+
         currentimage2 = imutils.resize(currentimage, width=800)
         cv2.imshow("Current",currentimage2)
 #        feedback=gen.send(currentimage)
         feedback=gen.change(currentimage,mode=0,valve=25)        
         cv2.waitKey(30)
+        infotowrite=[]
         for index,seatmask in enumerate(mask):
             percentage=Useage(feedback,seatmask,100)
             print(index,percentage)
+            infotowrite.append([index,percentage])
         feedback = imutils.resize(feedback, width=800)
         cv2.imshow("DiffAnalyze",feedback)
+        fileio.CSVToFile(infotowrite,"./Recognition/.sampleoutput/{index}.txt".format(index=i))
+        cv2.imwrite("./Recognition/.sampleoutput/{index}.jpg".format(index=i),currentimage2)
         print("\n")
 
     cv2.waitKey()

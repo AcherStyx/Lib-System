@@ -7,6 +7,8 @@
 *.mp4
 *.avi
 .old_*
+*.txt
+.sampleoutput
 
 # default ==================================================================
 # Byte-compiled / optimized / DLL files
