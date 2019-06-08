@@ -8,6 +8,8 @@ from time import sleep
 import pylab
 import imutils
 import CSVToFile as fileio
+import time
+
 def Mask_Square(shape,x,y,r):
     mask=np.zeros(shape,dtype=np.uint8)
     mask[max(x-r,0):min(x+r,shape[0]-1),max(y-r,0):min(y+r,shape[1]-1)]=255
@@ -129,13 +131,17 @@ def Useage(image,mask,times=1):
     sum_of_image=np.sum(masked)
     return sum_of_image/sum_of_mask*times
 
-def Useage_Filter(list,valve):
+def Useage_Filter(list):
     out=[]
+    valve=10
+    valve2=20
     for elem in list:
-        if elem>=valve:
-            out.append(True)
+        if valve2>=elem>=valve:
+            out.append("物品占座")
+        elif elem<valve:
+            out.append("空闲")
         else:
-            out.append(False)
+            out.append("使用中")
     return out
 
 def GetCapturePointList(image,n):    #image为所要交互获取点的图像，n为想要获取的点的个数
@@ -234,15 +240,16 @@ if __name__ == "__main__":
         infotowrite=[]
         for index,seatmask in enumerate(mask):
             percentage=Useage(feedback,seatmask,100)
-            print(index,percentage)
+            filted=Useage_Filter([percentage])
+            print("ID: {index} 占用率: {use:05.2f} 情况判断: {situ}".format(index=index,use=percentage,situ=filted[0]))
             infotowrite.append([index,percentage])
         feedback = imutils.resize(feedback, width=800)
         cv2.imshow("DiffAnalyze",feedback)
-        fileio.CSVToFile(infotowrite,"./Recognition/.sampleoutput/{index}.txt".format(index=i))
-        cv2.imwrite("./Recognition/.sampleoutput/{index}.jpg".format(index=i),currentimage2)
+        fileio.CSVToFile([[time.ctime()]]+infotowrite,"./Recognition/.sampleoutput/{index}.txt".format(index=i))
+        #cv2.imwrite("./Recognition/.sampleoutput/{index}.jpg".format(index=i),currentimage2)
         print("\n")
 
-    cv2.waitKey()
+    cv2.waitKey()   
     cv2.destroyAllWindows()
 
     
